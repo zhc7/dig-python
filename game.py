@@ -174,6 +174,15 @@ class ExplodeError(Exception):
 
 if __name__ == "__main__":
     game = Game()
+    import random
+    while True:
+        game.do(0, input("action for %s: "%"you"), [1])
+        game.do(1, random.choice(game.players[1].aActions()), [0])
+        game.settle()
+        if len(game.players) == 1:
+            print(list(game.players.keys())[0], "赢了！")
+            break
+        print(game.info())
     while True:
         for i in range(2):
             game.do(i, input("action for %s: "%i), [1-i])
