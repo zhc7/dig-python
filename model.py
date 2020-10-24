@@ -13,7 +13,7 @@ class PolicyNet:
             self.model = load_model(model_file)
         else:
             self.model = self.create_model()
-        self.initialize()
+            self.initialize()
 
     def create_model(self) -> Model:
         in_x = Input((96,))

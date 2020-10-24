@@ -6,6 +6,7 @@ class Game:
         self.players = {}
         self.events = {}  # {target: [(from, attack_name, afraid_of), ...], ...}
         self.actions = {}
+        self.histories = [[] for _ in range(players)]
         for i in range(players):
             self.players[i] = Player(uid=i)
         self.refresh()
@@ -20,6 +21,7 @@ class Game:
         if action in p.actions_to_other:
             for i in targets:
                 self.events[i] += [(player, attack, afraid)]
+        self.histories[player].append(action)
 
     def settle(self):
         # 结算阶段
