@@ -24,7 +24,7 @@ class Trainer:
         self.data = []
         self.data_buffer = [[], []]
         self.old_net = None
-        self.best_net = None
+        self.best_net = self.net
 
     def find_latest_model(self, prefix):
         biggest_timestamp = 0
@@ -73,7 +73,7 @@ class Trainer:
         while True:
             for i in range(2):
                 # p0, p1 = game.players[0], game.players[1]
-                act, state = self.choose_action(game, i, self.best_net)
+                act, state = self.choose_action(game, i, self.net)
                 game.do(i, act, [1 - i])
                 cache[i][0].append(state)
                 cache[i][1].append(self.one_hot(act))
@@ -89,9 +89,11 @@ class Trainer:
         print("progress")
         while len(self.data_buffer[0]) < data_size:
             self.self_play()
+        self.old_net = self.net.copy()
         self.net.train_step(*self.data_buffer)
         self.data_buffer = [[], []]
-        return self.evaluate(self.best_net, self.net)
+        self.evaluate(self.old_net, self.net, 1, True)
+        return self.evaluate(self.old_net, self.net, 20)
 
     def evaluate(self, old_net, new_net, count=100, verbose=0):
         winners = [0, 0]
@@ -123,7 +125,7 @@ class Trainer:
     def choose_action(game, i, net):
         p = game.players[i]
         state = Trainer.abstract_state(game, i)
-        actions = net.predict(state)
+        actions = net.predict(state, noise=0.5)
         # choose max
         max_val = 0
         act = None
@@ -138,10 +140,8 @@ class Trainer:
     def main(self):
         count = 0
         while True:
-            result = self.progress(1024)
+            result = self.progress(2048)
             print(result)
-            if result[0] > 0.55:
-                self.best_net = self.net.copy()
             count += 1
             if count % 5 == 0:
                 self.net.save_model()
@@ -149,6 +149,6 @@ class Trainer:
 
 if __name__ == '__main__':
     trainer = Trainer()
-    trainer.best_net = PolicyNet("models/good_models/model1603603941.h5")
+    # trainer.best_net = PolicyNet("models/good_models/model1603603941.h5")
     trainer.evaluate(trainer.best_net, trainer.net)
-    # trainer.main()
+    trainer.main()
