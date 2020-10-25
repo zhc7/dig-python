@@ -1,6 +1,3 @@
-from game import *
-import random
-from matplotlib import pyplot as plt
 from trainer import *
 
 
@@ -13,15 +10,7 @@ if __name__ == '__main__':
     while True:
         game.do(0, input("action for %s: " % "you"), [1])
         # choose max
-        state = trainer.abstract_state(game, 1)
-        actions = trainer.net.predict(state)
-        max_val = 0
-        act = None
-        for action in game.players[1].aActions():
-            val = actions[0][trainer.actions[action]]
-            if val > max_val:
-                max_val = val
-                act = action
+        act, _ = trainer.choose_action(game, 1, trainer.net)
         game.do(1, act, [0])
         print(act)
         game.settle()

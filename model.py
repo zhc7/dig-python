@@ -9,9 +9,9 @@ import time
 
 class PolicyNet:
     def __init__(self, model_file=None):
-        self.batch_size = 64
+        self.batch_size = 32
         self.epochs = 5
-        self.lr = 0.01
+        self.lr = 0.05
         if model_file:
             self.model = load_model(model_file)
         else:
@@ -41,8 +41,10 @@ class PolicyNet:
         y = np.array(labels, dtype="float32").reshape(len(labels), 14)
         self.model.fit(x, y, self.batch_size, self.epochs, verbose=1, validation_split=0.2)
 
-    def predict(self, state):
-        return self.model.predict(np.array(state, dtype="float32").reshape((1, 96)))
+    def predict(self, state, noise=0.25, dir_factor=0.3):
+        actions = self.model.predict(np.array(state, dtype="float32").reshape((1, 96)))[0]
+        actions = actions * (1 - noise) + np.random.dirichlet(dir_factor * np.ones(len(actions))) * noise
+        return actions
 
     def save_model(self):
         self.model.save("models/model%s.h5" % round(time.time()))
