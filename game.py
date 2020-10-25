@@ -21,7 +21,6 @@ class Game:
         if action in p.actions_to_other:
             for i in targets:
                 self.events[i] += [(player, attack, afraid)]
-        self.histories[player].append(action)
 
     def settle(self):
         # 结算阶段
@@ -43,6 +42,8 @@ class Game:
 
     def refresh(self):
         self.events = {}
+        for p in self.actions:
+            self.histories[p].append(self.actions[p][0])
         self.actions = {}
         keys = list(self.players.keys())
         for p in keys:

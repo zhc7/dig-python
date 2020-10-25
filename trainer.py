@@ -16,6 +16,7 @@ class Trainer:
             self.net = PolicyNet()
         else:
             self.net = PolicyNet(model_file)
+        print("using model from", model_file)
         self.actions = {'j': 0, 't': 1, 'by': 2, 'b': 3, 'bt': 4, 'fs': 5, 'fm': 6, 'fg': 7, 'fk': 8, 's': 9, 'gs': 10,
                         'mj': 11, 'k': 12, 'xd': 13}  # action名称映射到其index
         self.data = []
@@ -63,6 +64,7 @@ class Trainer:
         game = Game(2)
         game.do(0, "j")
         game.do(1, "j")
+        game.settle()
         cache = [[[], []], [[], []]]
         while True:
             for i in range(2):
@@ -107,6 +109,7 @@ class Trainer:
             game = Game(2)
             game.do(0, "j")
             game.do(1, "j")
+            game.settle()
             while True:
                 for i in range(2):
                     # p0, p1 = game.players[0], game.players[1]
