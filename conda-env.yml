@@ -1,0 +1,24 @@
+# Created by JingBh
+#
+# This file is used to create a conda environment
+# that contains all the dependencies.
+#
+# Usage:
+# $ conda create -n dig-python -f conda-env.yml
+# $ conda activate dig-python
+#
+# Note:
+# Due to a macOS restriction, macOS users should
+# run the following commands to make numpy work:
+# $ conda remove -y mkl mkl-service
+# $ conda install -y nomkl
+# $ conda env update --file conda-env.yml
+# (Ref: https://docs.anaconda.com/mkl-optimizations)
+
+name: dig-python
+channels:
+  - defaults
+dependencies:
+  - python=3.7
+  - keras==2.3.1
+  - tensorflow==2.0.0
