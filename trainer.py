@@ -1,6 +1,10 @@
+import re
+
+import numpy as np
 from game import *
 from model import PolicyNet
 import os
+import random
 
 
 class Trainer:
@@ -12,8 +16,11 @@ class Trainer:
             self.net = PolicyNet()
         else:
             self.net = PolicyNet(model_file)
-        self.actions = []  # uncompleted, action名称映射到其index
+        self.actions = {'j': 0, 't': 1, 'by': 2, 'b': 3, 'bt': 4, 'fs': 5, 'fm': 6, 'fg': 7, 'fk': 8, 's': 9, 'gs': 10,
+                        'mj': 11, 'k': 12, 'xd': 13}  # action名称映射到其index
         self.data = []
+        self.data_buffer = [[], []]
+        self.old_net = None
 
     def find_latest_model(self, prefix):
         biggest_timestamp = 0
@@ -42,19 +49,21 @@ class Trainer:
         following the order of "my resources, his resources, my steps, his steps“
         """
         state = []
-        for i in [player, 1 - player]:    # 先自己 再对方的顺序
+        for i in [player, 1 - player]:  # 先自己 再对方的顺序
             p = game.players[i]
-            state += [p.jue/10, p.ta/5, int(p.bingYing()), p.bing/10, p.baotou/5, p.defended_rush/5]
+            state += [p.jue / 10, p.tower / 5, int(p.camp), p.soldier / 10, p.baotou / 5, p.defended_rush / 5]
         for i in [player, 1 - player]:
             his = game.histories[i]
-            his = [his[0]] * 2 + his
-            for action in his:
+            processed_his = [his[0]] * 2 + his
+            for action in processed_his[-3:]:
                 state += self.one_hot(action)
         return state
 
     def self_play(self):
         game = Game(2)
-        cache = [[], []]
+        game.do(0, "j")
+        game.do(1, "j")
+        cache = [[[], []], [[], []]]
         while True:
             for i in range(2):
                 # p0, p1 = game.players[0], game.players[1]
@@ -64,14 +73,75 @@ class Trainer:
                 # choose max
                 max_val = 0
                 act = None
-                for action in p.aActions():
-                    val = actions[self.actions[action]]
+                available = p.aActions()
+                for action in available:
+                    val = actions[0][self.actions[action]]
                     if val > max_val:
                         max_val = val
                         act = action
-                game.do(i, act, [1-i])
-                cache[i].append((state, act))
+                if random.random() > 0.5:
+                    act = random.choice(available)
+                game.do(i, act, [1 - i])
+                cache[i][0].append(state)
+                cache[i][1].append(self.one_hot(act))
+            game.settle()
             if len(game.players) == 1:
                 winner = list(game.players.keys())[0]
                 break
         self.data += cache[winner]
+        self.data_buffer[0] += cache[winner][0]
+        self.data_buffer[1] += cache[winner][1]
+
+    def progress(self, data_size=512):
+        print("progress")
+        while len(self.data_buffer[0]) < data_size:
+            self.self_play()
+        self.old_net = self.net.copy()
+        self.net.train_step(*self.data_buffer)
+        self.data_buffer = [[], []]
+        return # self.evaluate(self.old_net, self.net)
+
+    def evaluate(self, old_net, new_net, count=100):
+        winners = [0, 0]
+        for t in range(count):
+            game = Game(2)
+            game.do(0, "j")
+            game.do(1, "j")
+            while True:
+                for i in range(2):
+                    # p0, p1 = game.players[0], game.players[1]
+                    p = game.players[i]
+                    net = [old_net, new_net][i]
+                    state = self.abstract_state(game, i)
+                    actions = net.predict(state)
+                    # choose max
+                    max_val = 0
+                    act = None
+                    for action in p.aActions():
+                        val = actions[0][self.actions[action]]
+                        if val > max_val:
+                            max_val = val
+                            act = action
+                    game.do(i, act, [1 - i])
+                game.settle()
+                if len(game.players) == 1:
+                    winner = list(game.players.keys())[0]
+                    winners[winner] += 1
+                    break
+        if sum(winners) != count:
+            raise ValueError
+        return winners[1] / sum(winners), winners
+
+    def main(self):
+        count = 0
+        while True:
+            result = self.progress(1024)
+            print(result)
+            count += 1
+            if count % 5 == 0:
+                self.net.save_model()
+
+
+if __name__ == '__main__':
+    trainer = Trainer()
+    trainer.main()

@@ -9,6 +9,9 @@ import time
 
 class PolicyNet:
     def __init__(self, model_file=None):
+        self.batch_size = 64
+        self.epochs = 5
+        self.lr = 0.01
         if model_file:
             self.model = load_model(model_file)
         else:
@@ -30,16 +33,21 @@ class PolicyNet:
         return model
 
     def initialize(self):
-        opt = SGD(0.01, momentum=0.9)
-        self.model.compile(opt, "categorical_crossentropy", ["loss", "accuracy"])
+        opt = SGD(self.lr, momentum=0.9)
+        self.model.compile(opt, "categorical_crossentropy", ["accuracy"])
 
     def train_step(self, states, labels):
-        x = np.array(states)
-        y = np.array(labels)
+        x = np.array(states, dtype="float32").reshape(len(states), 96)
+        y = np.array(labels, dtype="float32").reshape(len(labels), 14)
         self.model.fit(x, y, self.batch_size, self.epochs, verbose=1, validation_split=0.2)
 
     def predict(self, state):
-        return self.model.predict(state)
+        return self.model.predict(np.array(state, dtype="float32").reshape((1, 96)))
 
     def save_model(self):
-        self.model.save("models/model%s" % time.time())
+        self.model.save("models/model%s.h5" % round(time.time()))
+
+    def copy(self):
+        result = PolicyNet()
+        result.model.set_weights(self.model.get_weights())
+        return result
