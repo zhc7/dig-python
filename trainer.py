@@ -125,7 +125,7 @@ class Trainer:
     def choose_action(game, i, net):
         p = game.players[i]
         state = Trainer.abstract_state(game, i)
-        actions = net.predict(state, noise=0.5)
+        actions = net.predict(state, noise=0.25)
         # choose max
         max_val = 0
         act = None
