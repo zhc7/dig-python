@@ -1,11 +1,7 @@
 import re
-
-import numpy as np
-from keras.models import load_model
 from game import *
 from model import PolicyNet
 import os
-import random
 
 
 class Trainer:
@@ -25,6 +21,9 @@ class Trainer:
         self.data_buffer = [[], []]
         self.old_net = None
         self.best_net = self.net
+        self.train_noise = 0.5
+        self.play_noise = 0.25
+        print("train noise: %s, play noise: %s" % (self.train_noise, self.play_noise))
 
     def find_latest_model(self, prefix):
         biggest_timestamp = 0
@@ -42,7 +41,7 @@ class Trainer:
     @staticmethod
     def one_hot(action):
         p = Player(0)
-        coded_action = [0 for i in range(14)]
+        coded_action = [0 for _ in range(14)]
         coded_action[list(p.all_actions).index(action)] = 1
         return coded_action
 
@@ -71,9 +70,10 @@ class Trainer:
         game.settle()
         cache = [[[], []], [[], []]]
         while True:
+            sActions = Player.sActions(*game.players.values())
             for i in range(2):
                 # p0, p1 = game.players[0], game.players[1]
-                act, state = self.choose_action(game, i, self.net)
+                act, state = self.choose_action(game, i, self.net, self.train_noise, sActions[i])
                 game.do(i, act, [1 - i])
                 cache[i][0].append(state)
                 cache[i][1].append(self.one_hot(act))
@@ -103,10 +103,11 @@ class Trainer:
             game.do(1, "j")
             game.settle()
             while True:
+                sActions = Player.sActions(*game.players.values())
                 for i in range(2):
                     # p0, p1 = game.players[0], game.players[1]
                     net = [old_net, new_net][i]
-                    act, _ = self.choose_action(game, i, net)
+                    act, _ = self.choose_action(game, i, net, self.play_noise, sActions[i])
                     game.do(i, act, [1 - i])
                     if verbose:
                         print(i, act)
@@ -122,14 +123,14 @@ class Trainer:
         return winners[1] / sum(winners), winners
 
     @staticmethod
-    def choose_action(game, i, net):
+    def choose_action(game, i, net, noise, sAction):
         p = game.players[i]
         state = Trainer.abstract_state(game, i)
-        actions = net.predict(state, noise=0.5)
+        actions = net.predict(state, noise=noise)
         # choose max
         max_val = 0
         act = None
-        available = p.aActions()
+        available = sAction
         for action in available:
             val = actions[Trainer.actions[action]]
             if val > max_val:

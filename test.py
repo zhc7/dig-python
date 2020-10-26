@@ -2,6 +2,13 @@ from trainer import *
 
 
 if __name__ == '__main__':
+    p = Player(0)
+    p.jue = 10000
+    dic = dict()
+    for i in p.actions_to_other:
+        dic[i] = getattr(p, p.actions_to_other[i])()[1]
+    print(dic)
+    quit(11111)
     trainer = Trainer()
     game = Game()
     random = random.SystemRandom()
