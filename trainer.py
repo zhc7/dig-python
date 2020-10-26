@@ -16,13 +16,14 @@ class Trainer:
             self.net = PolicyNet()
         else:
             self.net = PolicyNet(model_file)
+            self.org_net = self.net.copy()
         print("using model from", model_file)
         self.data = []
         self.data_buffer = [[], []]
         self.old_net = None
         self.best_net = self.net
         self.train_noise = 0.5
-        self.play_noise = 0.25
+        self.play_noise = 0.5
         print("train noise: %s, play noise: %s" % (self.train_noise, self.play_noise))
 
     def find_latest_model(self, prefix):
@@ -92,7 +93,6 @@ class Trainer:
         self.old_net = self.net.copy()
         self.net.train_step(*self.data_buffer)
         self.data_buffer = [[], []]
-        self.evaluate(self.old_net, self.net, 1, True)
         return self.evaluate(self.old_net, self.net, 20)
 
     def evaluate(self, old_net, new_net, count=100, verbose=0):
@@ -146,6 +146,8 @@ class Trainer:
             count += 1
             if count % 5 == 0:
                 self.net.save_model()
+                print("saved")
+                print(self.evaluate(self.org_net, self.net, 100))
 
 
 if __name__ == '__main__':
