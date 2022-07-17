@@ -42,7 +42,7 @@ class Trainer:
     @staticmethod
     def one_hot(action):
         p = Player(0)
-        coded_action = [0 for i in range(14)]
+        coded_action = [0 for _ in range(14)]
         coded_action[list(p.all_actions).index(action)] = 1
         return coded_action
 
@@ -93,7 +93,6 @@ class Trainer:
         self.old_net = self.net.copy()
         self.net.train_step(*self.data_buffer)
         self.data_buffer = [[], []]
-        self.evaluate(self.old_net, self.net, 1, True)
         return self.evaluate(self.old_net, self.net, 20)
 
     def evaluate(self, old_net, new_net, count=100, verbose=0):
@@ -104,10 +103,11 @@ class Trainer:
             game.do(1, "j")
             game.settle()
             while True:
+                sActions = Player.sActions(*game.players.values())
                 for i in range(2):
                     # p0, p1 = game.players[0], game.players[1]
                     net = [old_net, new_net][i]
-                    act, _ = self.choose_action(game, i, net)
+                    act, _ = self.choose_action(game, i, net, self.play_noise, sActions[i])
                     game.do(i, act, [1 - i])
                     if verbose:
                         print(i, act)
