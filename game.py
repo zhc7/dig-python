@@ -15,7 +15,7 @@ class Game:
         # 动作阶段
         p = self.players[player]
         if action not in p.aActions():
-            raise ExplodeError("你爆了")
+            raise ExplodeError("你爆了, " + str(p.jue) + action + str(p.aActions()))
         attack, afraid = getattr(p, p.all_actions[action])()
         self.actions[player] = (action, targets, attack)
         if action in p.actions_to_other:
@@ -80,6 +80,7 @@ class Player:
         self.actions_to_other = {"s": "she", "gs": "gaoShe", "mj": "mengJin", "k": "kan", "xd": "xiaDi"}
         self.all_actions = dict(self.actions_to_self)
         self.all_actions.update(self.actions_to_other)
+        self.afraids = {'s': ['fs', 'bt'], 'gs': ['fg', 'bt'], 'mj': ['fm', 'bt'], 'k': ['fk', 'bt'], 'xd': ['fs']}
 
     def aActions(self):
         available = ["j", "fs", "fm", "fg", "fk"]
@@ -107,9 +108,61 @@ class Player:
 
         # 2rush
         if self.defended_rush >= 2:
-            available += self.all_actions.keys()
+            available += self.actions_to_other.keys()
 
         return available
+
+    def aAttacks(self):
+        available = []
+        if self.jue >= 2:
+            available += ["mj"]
+
+        # xd
+        if self.baotou >= 2:
+            available += ["xd"]
+
+        # tower
+        if self.tower >= 1:
+            available.append("s")
+        if self.tower >= 2:
+            available.append("gs")
+
+        # camp
+        if self.soldier >= 1:
+            available += ["k"]
+
+        # 2rush
+        if self.defended_rush >= 2:
+            available += [i for i in self.actions_to_other.keys() if i not in available]
+        return available
+
+    def sDefends(self, attacks):
+        actions = {"j"}
+        for attack in attacks:
+            for i in self.afraids[attack]:
+                if i == "bt" and self.jue < 1:
+                    continue
+                actions.add(i)
+        return list(actions)
+
+    @staticmethod
+    def sActions(p1, p2):
+        a1 = p1.aAttacks()
+        a2 = p2.aAttacks()
+        f1 = p1.sDefends(a2)
+        f2 = p2.sDefends(a1)
+
+        def av(p):
+            available = []
+            if p.jue >= 1:
+                available += ["t"]
+                if p.camp:
+                    available += ["b"]
+            if p.jue >= 2:
+                available += ["by"]
+            return available
+
+        return a1 + f1 + av(p1), a2 + f2 + av(p2)
 
     def die(self):
         if self.soldier >= 2:
@@ -181,6 +234,7 @@ class ExplodeError(Exception):
 
 if __name__ == "__main__":
     game = Game()
+    '''
     import random
 
     while True:
@@ -199,3 +253,4 @@ if __name__ == "__main__":
             print(list(game.players.keys())[0], "赢了！")
             break
         print(game.info())
+    '''
