@@ -18,7 +18,11 @@ def hello():
 
 @app.route("/api/register", methods=["POST"])
 def register():
-    if session.new:
+    try:
+        _ = games[session["id"]]
+    except KeyError:
+        session["id"] = len(games)
+    except IndexError:
         session["id"] = len(games)
     return refresh()
 
