@@ -35,8 +35,8 @@ class Game:
                 if source in respond[1]:
                     if respond[2] >= attack:
                         continue
-                    isDied = self.players[i].die()
-                    if isDied:
+                    isDead = self.players[i].die()
+                    if isDead:
                         break
         self.refresh()
 
@@ -181,15 +181,30 @@ class Player:
         return 0, []
 
     def she(self):
-        self.tower -= 1
+        if self.tower >= 1:
+            self.tower -= 1
+        elif self.defended_rush >= 2:
+            self.defended_rush -= 2
+        else:
+            raise ExplodeError("你爆了")
         return 2, ["fs", "bt"]
 
     def gaoShe(self):
-        self.tower -= 2
+        if self.tower >= 2:
+            self.tower -= 2
+        elif self.defended_rush >= 2:
+            self.defended_rush -= 2
+        else:
+            raise ExplodeError("你爆了")
         return 5, ["fg", "bt"]
 
     def mengJin(self):
-        self.jue -= 2
+        if self.defended_rush >= 2:
+            self.defended_rush -= 2
+        elif self.jue >= 2:
+            self.jue -= 2
+        else:
+            raise ExplodeError("你爆了")
         return 3, ["fm", "bt"]
 
     def bingYing(self):
@@ -203,7 +218,12 @@ class Player:
         return 0, []
 
     def kan(self):
-        self.soldier -= 1
+        if self.defended_rush >= 2:
+            self.defended_rush -= 2
+        elif self.soldier >= 1:
+            self.soldier -= 1
+        else:
+            raise ExplodeError("你爆了")
         return 4, ["fk", "bt"]
 
     def baoTou(self):
