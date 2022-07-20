@@ -1,3 +1,6 @@
 # python~=3.7.0
 keras==2.3.1
 tensorflow==2.0.0
+tensorflow-estimator==2.0.0
+h5py~=2.0
+flask

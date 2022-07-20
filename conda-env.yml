@@ -4,7 +4,7 @@
 # that contains all the dependencies.
 #
 # Usage:
-# $ conda create -n dig-python -f conda-env.yml
+# $ conda env create -n dig-python -f conda-env.yml
 # $ conda activate dig-python
 #
 # Note:
@@ -19,6 +19,8 @@ name: dig-python
 channels:
   - defaults
 dependencies:
-  - python=3.7
   - keras==2.3.1
   - tensorflow==2.0.0
+  - tensorflow-estimator==2.0.0
+  - h5py~=2.0
+  - flask
